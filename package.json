@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "nx": "nx",
-    "start": "nx serve",
+    "start-client": "nx serve client --args=--config=config.dev.json",
     "build": "nx build",
     "test": "nx test",
     "lint": "nx workspace-lint && nx lint",
@@ -34,6 +34,7 @@
     "@nestjs/websockets": "^7.4.2",
     "args": "^5.0.1",
     "reflect-metadata": "^0.1.13",
+    "robotjs": "^0.6.0",
     "rxjs": "~6.5.5",
     "socket.io-client": "^2.3.0",
     "win-audio": "^2.0.2"

@@ -5,6 +5,7 @@ import io from 'socket.io-client';
 import * as os from 'os';
 import * as audio from 'win-audio';
 import { execSync } from 'child_process';
+import * as robot from 'robotjs';
 import Socket = SocketIOClient.Socket;
 
 enum ShutdownType {
@@ -23,6 +24,7 @@ class Main {
     this.initSocket();
     this.initVolume();
     this.initShutdown();
+    this.initMouseControl();
   }
 
   private initSocket(): void {
@@ -79,6 +81,14 @@ class Main {
           execSync(`shutdown -s -t ${time * 60}`);
           break;
       }
+    });
+  }
+
+  private initMouseControl(): void {
+    this.socket.on('mouseMove', ({ deltaX, deltaY }) => {
+      console.log(deltaX, deltaY);
+      const {x, y} = robot.getMousePos()
+      robot.moveMouse(x + deltaX, y+ deltaY);
     });
   }
 

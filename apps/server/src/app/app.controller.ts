@@ -53,7 +53,7 @@ export class AppController {
           resolve(info);
         });
       } else {
-        reject(new HttpException('Parametrs not found', HttpStatus.NOT_FOUND))
+        reject(new HttpException('Parametrs not found', HttpStatus.NOT_FOUND));
       }
     });
   }
@@ -72,5 +72,13 @@ export class AppController {
       throw new HttpException('Client not connected', HttpStatus.FORBIDDEN);
     }
     return this.service.connectedUser.userInfo;
+  }
+
+  @Post('mouse-move')
+  mouse(@Body('deltaX') deltaX, @Body('deltaY') deltaY) {
+    if (!this.service.connectedUser) {
+      throw new HttpException('Client not connected', HttpStatus.FORBIDDEN);
+    }
+    this.service.connectedUser.socket.emit('mouseMove', { deltaX, deltaY });
   }
 }
