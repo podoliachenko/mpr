@@ -88,7 +88,7 @@ class Main {
     this.socket.on('mouseMove', ({ deltaX, deltaY }) => {
       console.log(deltaX, deltaY);
       const {x, y} = robot.getMousePos()
-      robot.moveMouse(x + deltaX, y+ deltaY);
+      robot.moveMouse(x - deltaX, y - deltaY);
     });
   }
 

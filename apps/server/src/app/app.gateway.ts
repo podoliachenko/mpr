@@ -1,6 +1,6 @@
 import {
-  MessageBody,
-  OnGatewayConnection, OnGatewayDisconnect,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer
@@ -21,7 +21,9 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Client): any {
-    this.service.disconnect();
+    if (client.id == this.service.connectedUser.socket.id) {
+      this.service.disconnect();
+    }
   }
 
   @SubscribeMessage('initInfo')
@@ -30,12 +32,19 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('volumeChange')
-  volumeChange(client: Socket, @MessageBody() volume: number): void {
+  volumeChange(client: Socket, volume: number): void {
     this.service.connectedUser.userInfo.volume = volume;
   }
+
   @SubscribeMessage('toggleChange')
-  toggleChange(client: Socket, @MessageBody() toggle: boolean): void {
+  toggleChange(client: Socket, toggle: boolean): void {
     this.service.connectedUser.userInfo.isMuted = toggle;
+  }
+
+  @SubscribeMessage('mouseMove')
+  mouseMove(client: Socket, { deltaX, deltaY }): void {
+    this.service.connectedUser.socket.emit('mouseMove', { deltaX, deltaY });
+
   }
 
 }
