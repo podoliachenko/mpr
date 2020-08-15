@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { AppService } from './app.service';
 import { isNullOrUndefined } from 'util';
 
@@ -25,21 +25,37 @@ export class AppController {
   }
 
   @Post('volume')
-  setVolume(@Body('volume') volume: number, @Body('delta') delta: number, @Body('mute') mute: boolean) {
-    if (!this.service.connectedUser) {
-      throw new HttpException('Client not connected', HttpStatus.FORBIDDEN);
-    }
-    if (volume) {
-      this.service.connectedUser.socket.emit('setVolume', volume);
-    } else if (delta) {
-      if (delta > 0) {
-        this.service.connectedUser.socket.emit('volumeUp', delta);
-      } else {
-        this.service.connectedUser.socket.emit('volumeDown', Math.abs(delta));
+  async setVolume(@Body('volume') volume: number, @Body('delta') delta: number, @Body('mute') mute: boolean) {
+    return new Promise((resolve, reject) => {
+      if (!this.service.connectedUser) {
+        reject(new HttpException('Client not connected', HttpStatus.FORBIDDEN));
       }
-    } else if (!isNullOrUndefined(mute)) {
-      this.service.connectedUser.socket.emit('muteChange', mute);
-    }
+      if (volume) {
+        this.service.connectedUser.socket.emit('setVolume', volume, (info) => {
+          this.service.connectedUser.userInfo = info;
+          resolve(info);
+        });
+      } else if (delta) {
+        if (delta > 0) {
+          this.service.connectedUser.socket.emit('volumeUp', delta, (info) => {
+            this.service.connectedUser.userInfo = info;
+            resolve(info);
+          });
+        } else {
+          this.service.connectedUser.socket.emit('volumeDown', Math.abs(delta), (info) => {
+            this.service.connectedUser.userInfo = info;
+            resolve(info);
+          });
+        }
+      } else if (!isNullOrUndefined(mute)) {
+        this.service.connectedUser.socket.emit('muteChange', mute, (info) => {
+          this.service.connectedUser.userInfo = info;
+          resolve(info);
+        });
+      } else {
+        reject(new HttpException('Parametrs not found', HttpStatus.NOT_FOUND))
+      }
+    });
   }
 
   @Post('shutdown')

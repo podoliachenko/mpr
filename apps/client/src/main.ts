@@ -2,10 +2,10 @@ import { Args } from './app/Args';
 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
 // @ts-ignore
 import io from 'socket.io-client';
-import Socket = SocketIOClient.Socket;
 import * as os from 'os';
 import * as audio from 'win-audio';
 import { execSync } from 'child_process';
+import Socket = SocketIOClient.Socket;
 
 enum ShutdownType {
   Shutdown,
@@ -30,43 +30,35 @@ class Main {
     this.socket = io(`http://${this.args.flags.host}:${this.args.flags.port}`);
     this.socket.on('connect', () => {
       console.log(`Connected to server http://${this.args.flags.host}:${this.args.flags.port}`);
-      this.socket.emit('initInfo', {
-        release: os.release(),
-        platform: os.platform(),
-        arch: os.arch(),
-        username: os.userInfo().username,
-        hostname: os.hostname(),
-        volume: audio.speaker.get(),
-        isMuted: audio.speaker.isMuted()
-      });
+      this.socket.emit('initInfo', this.makeInfo());
     });
   }
 
   private initVolume(): void {
     audio.speaker.polling();
 
-    this.socket.on('setVolume', (val: number) => {
+    this.socket.on('setVolume', (val: number, fn) => {
       audio.speaker.set(val);
-      this.socket.emit('volumeChange', audio.speaker.get());
+      fn(this.makeInfo());
     });
-    this.socket.on('volumeUp', (val: number) => {
+    this.socket.on('volumeUp', (val: number, fn) => {
       audio.speaker.increase(val);
-      this.socket.emit('volumeChange', audio.speaker.get());
+      fn(this.makeInfo());
     });
-    this.socket.on('volumeDown', (val: number) => {
+    this.socket.on('volumeDown', (val: number, fn) => {
       audio.speaker.decrease(val);
-      this.socket.emit('volumeChange', audio.speaker.get());
+      fn(this.makeInfo());
     });
-    this.socket.on('muteChange', (val: boolean) => {
+    this.socket.on('muteChange', (val: boolean, fn) => {
       audio.speaker.decrease(val);
       if (val) {
         audio.speaker.mute();
       } else {
         audio.speaker.unmute();
       }
-      this.socket.emit('toggleChange', audio.speaker.isMuted());
+      fn(this.makeInfo());
     });
-    audio.speaker.events.on('change', (volume: { old: number, new: number }) => {
+    audio.speaker.events.on('change', (volume: { old: number, new: number }, fn) => {
       this.socket.emit('volumeChange', volume.new);
     });
     audio.speaker.events.on('toggle', (toggle: { old: boolean, new: boolean }) => {
@@ -88,6 +80,18 @@ class Main {
           break;
       }
     });
+  }
+
+  private makeInfo() {
+    return {
+      release: os.release(),
+      platform: os.platform(),
+      arch: os.arch(),
+      username: os.userInfo().username,
+      hostname: os.hostname(),
+      volume: audio.speaker.get(),
+      isMuted: audio.speaker.isMuted()
+    };
   }
 }
 
