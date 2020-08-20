@@ -86,14 +86,31 @@ class Main {
 
   private initMouseControl(): void {
     this.socket.on('mouseMove', ({ deltaX, deltaY }) => {
-      console.log(deltaX, deltaY);
-      const {x, y} = robot.getMousePos()
-      robot.moveMouse(x - deltaX, y - deltaY);
+      const { x, y } = robot.getMousePos();
+      robot.moveMouse(x + deltaX, y + deltaY);
+    });
+    this.socket.on('mouseScroll', ({ deltaX, deltaY }) => {
+      setTimeout(() => {
+        robot.scrollMouse(0, 1000);
+      }, 1000);
+    });
+    this.socket.on('mouseLeftClick', () => {
+      robot.mouseClick();
+    });
+    this.socket.on('mouseRightClick', () => {
+      robot.mouseClick('right');
+    });
+    this.socket.on('mouseMiddleClick', () => {
+      robot.mouseClick('middle');
+    });
+    this.socket.on('mouseLeftToggle', () => {
+      robot.mouseToggle();
     });
   }
 
   private makeInfo() {
     return {
+      name: this.args.flags.name,
       release: os.release(),
       platform: os.platform(),
       arch: os.arch(),

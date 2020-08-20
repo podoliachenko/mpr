@@ -17,7 +17,8 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private service: AppService) {
   }
 
-  handleConnection(client: Client, ...args: any[]): any {
+  handleConnection(client: Client, ...args: any[]) {
+    ;
   }
 
   handleDisconnect(client: Client): any {
@@ -29,22 +30,53 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('initInfo')
   initInfo(client: Socket, data: UserInfo): void {
     this.service.setUser({ socket: client, userInfo: data });
+    this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
   }
 
   @SubscribeMessage('volumeChange')
   volumeChange(client: Socket, volume: number): void {
     this.service.connectedUser.userInfo.volume = volume;
+    this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
   }
 
   @SubscribeMessage('toggleChange')
   toggleChange(client: Socket, toggle: boolean): void {
     this.service.connectedUser.userInfo.isMuted = toggle;
+    this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
   }
 
-  @SubscribeMessage('mouseMove')
+  @SubscribeMessage('mouseMoveTarget')
   mouseMove(client: Socket, { deltaX, deltaY }): void {
     this.service.connectedUser.socket.emit('mouseMove', { deltaX, deltaY });
-
   }
 
+  @SubscribeMessage('mouseScrollTarget')
+  mouseScroll(client: Socket, { deltaX, deltaY }): void {
+    this.service.connectedUser.socket.emit('mouseScroll', { deltaX, deltaY });
+  }
+
+  @SubscribeMessage('getInfoTarget')
+  initClientIfo(client: Socket): void {
+    this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
+  }
+
+  @SubscribeMessage('mouseLeftClickTarget')
+  mouseLeftClick(client: Socket): void {
+    this.service.connectedUser.socket.emit('mouseLeftClick');
+  }
+
+  @SubscribeMessage('mouseRightClickTarget')
+  mouseRightClick(client: Socket): void {
+    this.service.connectedUser.socket.emit('mouseRightClick');
+  }
+
+  @SubscribeMessage('mouseMiddleClickTarget')
+  rightClickTarget(client: Socket): void {
+    this.service.connectedUser.socket.emit('mouseMiddleClick');
+  }
+
+  @SubscribeMessage('mouseLeftToggleTarget')
+  mouseLeftToggle(client: Socket): void {
+    this.service.connectedUser.socket.emit('mouseLeftToggle');
+  }
 }

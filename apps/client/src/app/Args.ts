@@ -14,6 +14,7 @@ export class Args {
   private initArgs(): void {
     args.option('port', 'Порт сервера', 3000)
       .option('host', 'Хост сервера', 'localhost')
+      .option('name', 'Имя пользователя', '!!!')
       .option('config', 'Конфиг в формате json', './config.json');
 
     this.flags = args.parse(process.argv);
@@ -36,4 +37,5 @@ export interface ConfigFlags {
   host: string;
   port: number;
   config: string;
+  name: string;
 }
