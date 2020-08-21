@@ -18,6 +18,7 @@ class Main {
 
   socket: Socket;
   args: Args;
+  shutdownTimeTimestamp: number = null;
 
   constructor() {
     this.args = new Args();
@@ -39,46 +40,47 @@ class Main {
   private initVolume(): void {
     audio.speaker.polling();
 
-    this.socket.on('setVolume', (val: number, fn) => {
+    this.socket.on('setVolume', (val: number) => {
       audio.speaker.set(val);
-      fn(this.makeInfo());
     });
-    this.socket.on('volumeUp', (val: number, fn) => {
+    this.socket.on('volumeUp', (val: number) => {
       audio.speaker.increase(val);
-      fn(this.makeInfo());
     });
-    this.socket.on('volumeDown', (val: number, fn) => {
+    this.socket.on('volumeDown', (val: number) => {
       audio.speaker.decrease(val);
-      fn(this.makeInfo());
     });
-    this.socket.on('muteChange', (val: boolean, fn) => {
+    this.socket.on('muteChange', (val: boolean) => {
       audio.speaker.decrease(val);
       if (val) {
         audio.speaker.mute();
       } else {
         audio.speaker.unmute();
       }
-      fn(this.makeInfo());
     });
     audio.speaker.events.on('change', (volume: { old: number, new: number }, fn) => {
-      this.socket.emit('volumeChange', volume.new);
+      this.socket.emit('volumeChanged', volume.new);
     });
     audio.speaker.events.on('toggle', (toggle: { old: boolean, new: boolean }) => {
-      this.socket.emit('toggleChange', toggle.new);
+      this.socket.emit('muteChanged', toggle.new);
     });
   }
 
   private initShutdown(): void {
-    this.socket.on('shutdown', ({ type, time = 1 }) => {
+    this.socket.on('shutdown', ({ type, time = 1 }, fn) => {
       switch (type as ShutdownType) {
         case ShutdownType.Shutdown:
           execSync(`shutdown -s`);
+          fn(this.makeInfo());
           break;
         case ShutdownType.CancelShutdown:
           execSync(`shutdown -a`);
+          this.shutdownTimeTimestamp = null;
+          fn(this.makeInfo());
           break;
         case ShutdownType.Timer:
           execSync(`shutdown -s -t ${time * 60}`);
+          this.shutdownTimeTimestamp = Date.now() + (time * 60 * 1000);
+          fn(this.makeInfo());
           break;
       }
     });
@@ -90,10 +92,7 @@ class Main {
       robot.moveMouse(x + deltaX, y + deltaY);
     });
     this.socket.on('mouseScroll', ({ deltaX, deltaY }) => {
-      setTimeout(() => {
-        console.log('cell')
-        robot.scrollMouse(deltaX, deltaY);
-      }, 1000);
+      robot.scrollMouse(deltaX, deltaY);
     });
     this.socket.on('mouseLeftClick', () => {
       robot.mouseClick();
@@ -118,7 +117,8 @@ class Main {
       username: os.userInfo().username,
       hostname: os.hostname(),
       volume: audio.speaker.get(),
-      isMuted: audio.speaker.isMuted()
+      isMuted: audio.speaker.isMuted(),
+      shutdownTime: this.shutdownTimeTimestamp
     };
   }
 }

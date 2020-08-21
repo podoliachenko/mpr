@@ -19,7 +19,6 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleConnection(client: Client, ...args: any[]) {
-    ;
     Logger.debug(`Socket connected ${client.id}`, 'Socket');
   }
 
@@ -36,16 +35,44 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
   }
 
-  @SubscribeMessage('volumeChange')
-  volumeChange(client: Socket, volume: number): void {
+  @SubscribeMessage('volumeChanged')
+  volumeChanged(client: Socket, volume: number): void {
     this.service.connectedUser.userInfo.volume = volume;
     this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
   }
 
-  @SubscribeMessage('toggleChange')
-  toggleChange(client: Socket, toggle: boolean): void {
+  @SubscribeMessage('volumeChangeDeltaTarget')
+  volumeChangeDelta(client: Socket, volume: number) {
+    if (volume > 0) {
+      this.service.connectedUser.socket.emit('volumeUp', volume);
+    } else {
+      this.service.connectedUser.socket.emit('volumeDown', Math.abs(volume));
+    }
+  }
+
+  @SubscribeMessage('volumeChangeTarget')
+  volumeChange(client: Socket, volume: number) {
+    this.service.connectedUser.socket.emit('setVolume', volume);
+  }
+
+
+  @SubscribeMessage('muteChanged')
+  toggleChanged(client: Socket, toggle: boolean): void {
     this.service.connectedUser.userInfo.isMuted = toggle;
     this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
+  }
+
+  @SubscribeMessage('muteChangeTarget')
+  toggleChange(client: Socket, toggle: boolean): void {
+    this.service.connectedUser.socket.emit('muteChange', toggle);
+  }
+
+  @SubscribeMessage('shutdownTarget')
+  shutdownTarget(client: Socket, {type, time}) {
+    this.service.connectedUser.socket.emit('shutdown', { type, time }, (client) => {
+      this.service.connectedUser.userInfo = client;
+      this.server.emit('getInfoTarget@', this.service.connectedUser.userInfo);
+    });
   }
 
   @SubscribeMessage('mouseMoveTarget')

@@ -63,7 +63,9 @@ export class AppController {
     if (!this.service.connectedUser) {
       throw new HttpException('Client not connected', HttpStatus.FORBIDDEN);
     }
-    this.service.connectedUser.socket.emit('shutdown', { type, time });
+    this.service.connectedUser.socket.emit('shutdown', { type, time }, (client) => {
+      this.service.connectedUser.userInfo = client;
+    });
   }
 
   @Get('connected')
