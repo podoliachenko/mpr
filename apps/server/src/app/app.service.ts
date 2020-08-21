@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Socket } from 'socket.io';
 
 export interface UserInfo {
+  name: string;
   release: string;
   platform: string;
   arch: string;
@@ -25,12 +26,11 @@ export class AppService {
 
   setUser(user: ConnectedUser) {
     this.connectedUser = user;
-    Logger.log(`Client connected ${this.connectedUser.userInfo.hostname}`, 'Connection')
-    Logger.log(this.connectedUser.userInfo, 'Info')
+    Logger.debug(`Client connected name: ${this.connectedUser.userInfo.name}, id: ${user.socket.id}`, 'Client')
   }
 
   disconnect() {
-    Logger.log(`Client disconnected ${this.connectedUser.userInfo.hostname}`, 'Connection')
+    Logger.debug(`Client disconnected name: ${this.connectedUser.userInfo.name}, id: ${this.connectedUser.socket.id}`, 'Connection')
     this.connectedUser = null;
   }
 

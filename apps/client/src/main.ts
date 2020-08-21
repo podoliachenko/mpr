@@ -91,7 +91,8 @@ class Main {
     });
     this.socket.on('mouseScroll', ({ deltaX, deltaY }) => {
       setTimeout(() => {
-        robot.scrollMouse(0, 1000);
+        console.log('cell')
+        robot.scrollMouse(deltaX, deltaY);
       }, 1000);
     });
     this.socket.on('mouseLeftClick', () => {
